@@ -1,0 +1,85 @@
+# Heading Downgrade Fix & Analysis
+
+This document provides a deep-dive implementation-level analysis answering why headings are downgraded to plain text in `docling-hierarchical-pdf` when processing PDFs without a visual ToC, along with the precise code changes to fix it.
+
+## 1. Where and Why Headings are Downgraded
+
+The explicit downgrading happens in **[docling-hierarchical-pdf/hierarchical/postprocessor.py](file:///c:/Users/hp/OneDrive/Desktop/rag_learning_materials/docling/docling-hierarchical-pdf/hierarchical/postprocessor.py)**, specifically inside the `ResultPostprocessor.process()` method. 
+
+Look at this exact block (around line 191):
+```python
+if isinstance(item, SectionHeaderItem) and item.self_ref not in by_ref and header_correction:
+    # convert SectionHeaderItem to TextItem
+    text_item = TextItem(
+        label=DocItemLabel.TEXT,
+        **{k: v for k, v in item.model_dump().items() if k != "label" and k in TextItem.model_fields},
+    )
+    # now swap the reference to SectionHeaderItem with the one of text_item in the doc.
+    set_item_in_doc(doc, text_item)
+    item = text_item
+```
+
+**Why it happens:**
+The postprocessor sets `header_correction = True` if it finds **any** native metadata bookmarks using PyMuPDF (`FitzDocument.get_toc()`). 
+If a bookmark is found, it uses the bookmarks to build a hierarchy map (`by_ref`).
+If Docling's visual layout model correctly detected a `SectionHeaderItem` but that exact heading is *not* present in the PDF's native bookmarks, the code aggressively downgrades it to a plain `TextItem`.
+
+## 2. How the Absence of a ToC Affects Detection
+
+You mentioned your PDFs "do NOT contain a Table of Contents (ToC)". While they might lack a *visual* printed ToC, many PDF generators embed hidden metadata bookmarks (e.g., a single "Page 1" bookmark or auto-generated outlines). 
+
+Because `len(hbm.toc) > 0` returns `True` for these invisible garbage bookmarks, the logic enters `header_correction = True`. Consequently, the module views the bogus bookmarks as the **absolute ground truth**. When your actual document headings don't match the invisible bookmarks, `docling-hierarchical-pdf` actively strips their `SectionHeaderItem` classification so the chunker never sees them.
+
+If a file truly has absolutely zero bookmarks (`len(hbm.toc) == 0`), `header_correction` remains `False`, and this forced downgrade is skipped. However, another function, [cleanup_non_headings()](file:///c:/Users/hp/OneDrive/Desktop/rag_learning_materials/docling/docling-hierarchical-pdf/hierarchical/hierarchy_builder.py#324-362) in `hierarchical_builder.py`, filters out headings that are at the same vertical position across pages (like page headers). If filtered out there, they also lose their correct hierarchy matching.
+
+## 3. Intentional or Bug?
+
+This is an **intentional design choice that functions as a severe limitation/flaw** in real-world scenarios. The author assumed that if a PDF contains native bookmarks, those bookmarks are exhaustive and perfect. In reality, most PDFs have incomplete or garbage bookmarks, leading the postprocessor to destroy perfectly valid headings detected by the vision model.
+
+## 4. Concrete Solution: Code-Level Modification
+
+To prevent the module from destroying Docling's hard work, we need to disable the aggressive downgrade block. We will keep the logic that *upgrades* text to headings based on the ToC, but remove the logic that *downgrades* them.
+
+### Exact File to Modify:
+[docling-hierarchical-pdf/hierarchical/postprocessor.py](file:///c:/Users/hp/OneDrive/Desktop/rag_learning_materials/docling/docling-hierarchical-pdf/hierarchical/postprocessor.py)
+
+### Patch:
+Modify the [process()](file:///c:/Users/hp/OneDrive/Desktop/rag_learning_materials/docling/docling-hierarchical-pdf/hierarchical/postprocessor.py#165-243) method as follows:
+
+```diff
+-                 if isinstance(item, SectionHeaderItem) and item.self_ref not in by_ref and header_correction:
+-                     # convert SectionHeaderItem to TextItem
+-                     text_item = TextItem(
+-                         label=DocItemLabel.TEXT,
+-                         **{k: v for k, v in item.model_dump().items() if k != "label" and k in TextItem.model_fields},
+-                     )
+-                     # now swap the reference to SectionHeaderItem with the one of text_item in the doc.
+-                     set_item_in_doc(doc, text_item)
+-                     item = text_item
++                 # CHANGE: Skip downgrading SectionHeaderItem to TextItem.
++                 # If a heading was detected by the page layout model but isn't in 
++                 # the native ToC (or the ToC is incomplete), we still want to preserve 
++                 # it as a SectionHeaderItem so chunking logic honors it.
++                 # if isinstance(item, SectionHeaderItem) and item.self_ref not in by_ref and header_correction:
++                 #    pass
+
+                  if item.self_ref in by_ref:
+                      if not isinstance(item, SectionHeaderItem):
+```
+
+### What happens when you apply this patch?
+1. The `if` block that converts `SectionHeaderItem` to `TextItem` is bypassed.
+2. The item falls into the `elif current_header.doc_ref is not None:` block later in the loop.
+3. The code will do this:
+   ```python
+   if isinstance(item, SectionHeaderItem):
+       item.level = level + 1
+   ```
+4. This keeps the item as a `SectionHeaderItem`! The hierarchy builder will assign it a level right below the last known heading (`level + 1`), preserving it as a valid heading.
+5. Your `HierarchicalChunker` will now see the `SectionHeaderItem` and correctly split chunks along heading boundaries as expected, even if the ToC was missing or incomplete. 
+
+## Verification Plan
+1. **Apply the patch** to [hierarchical/postprocessor.py](file:///c:/Users/hp/OneDrive/Desktop/rag_learning_materials/docling/docling-hierarchical-pdf/hierarchical/postprocessor.py) on lines 191-200.
+2. **Run your extraction pipeline** on a known problematic PDF that previously lost its headings.
+3. **Inspect the JSON payload** inside `result.document`: your headings will now be formatted as `"type": "SectionHeaderItem"` instead of `"type": "TextItem"`.
+4. **Run `HierarchicalChunker`** and verify the document correctly fragments into individual heading-labeled chunks.
