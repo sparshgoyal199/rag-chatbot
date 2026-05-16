@@ -1,22 +1,7 @@
-prefetch = [
-    models.Prefetch(
-        query=models.Document(text=query, model=dense_embedding_model),
-        using="dense",
-        limit=20,
-    ),
-    models.Prefetch(
-        query=models.Document(text=query, model=sparse_embedding_model),
-        using="sparse",
-        limit=20,
-    ),
-]
+def retrieve_relevant_chunks(session_id: str, embedded_query: list[float], original_query: str):
+    # will use vector_service for actually querying the db, it will not have its own logic of querying the db
+    # It will only have logic of hybrid_search, and BM25 sparse vector
+    pass
 
-results = client.query_points(
-    collection_name,
-    prefetch=prefetch,
-    query=models.RrfQuery(rrf=models.Rrf(weights=[2.0, 1.0])),
-    with_payload=True,
-    limit=10,
-)
-
-pprint.pp(results.points)
+def response_generator(query: str, relevant_chunks: list[dict]):
+    pass
