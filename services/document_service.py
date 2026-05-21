@@ -7,6 +7,7 @@ from docling_core.types.doc import DoclingDocument
 from collections import Counter
 from docling_core.types.doc import DocItemLabel, SectionHeaderItem
 from docling.datamodel.document import ConversionResult
+import pickle
 
 
 log = logging.getLogger(__name__)
@@ -117,6 +118,9 @@ def parse_document(file: UploadFile):
     filename = file.filename
     file_bytes = file.file.read()
     file_extension = file.content_type.split("/")[-1].lower()
+    if file_extension == "octet-stream":
+        valid_structured_doc = pickle.loads(file_bytes)
+        return valid_structured_doc
     if file_extension not in ["pdf"]:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
     file_stream = BytesIO(file_bytes)
