@@ -45,11 +45,9 @@ def prompt_formatter(query: str,
 
         OUTPUT FORMAT:
 
-        Return ONLY a JSON object in the following structure:
-
-        {
-            "answer": "Your complete, well-structured answer with inline citations like [p. X] placed at the right level of granularity."
-        }
+        Return ONLY a plain string containing your complete answer with inline citations.
+        Do NOT wrap it in JSON, a JS object, quotes, or any other structure.
+        Output the answer text directly — nothing else.
 
         ---
 
@@ -58,16 +56,22 @@ def prompt_formatter(query: str,
         Query: What is attention in transformer models?
 
         Response:
-        {
-            "answer": "Attention is a mechanism that allows a model to weigh the relevance of different parts of an input sequence when producing each output token. Rather than compressing the entire input into a single fixed vector, attention lets the model dynamically focus on the most relevant tokens at each step [p. 34].\n\nThere are several key properties of attention:\n- It operates across all token pairs simultaneously, making it parallelizable.\n- Scaled dot-product attention divides scores by the square root of the key dimension to prevent gradient saturation.\n- Multi-head attention runs several attention operations in parallel, each learning different relational patterns [p. 36]."
-        }
+        Attention is a mechanism that allows a model to weigh the relevance of different parts of an input sequence when producing each output token. Rather than compressing the entire input into a single fixed vector, attention lets the model dynamically focus on the most relevant tokens at each step [p. 34].
+
+        There are several key properties of attention:
+        - It operates across all token pairs simultaneously, making it parallelizable.
+        - Scaled dot-product attention divides scores by the square root of the key dimension to prevent gradient saturation.
+        - Multi-head attention runs several attention operations in parallel, each learning different relational patterns [p. 36].
 
         Query: What are the causes of overfitting?
 
         Response:
-        {
-            "answer": "Overfitting occurs when a model learns the training data too closely, capturing noise rather than the underlying pattern. This results in poor generalization to unseen data.\n\nCommon causes include:\n- **Insufficient training data**: With too few examples, the model memorizes rather than generalizes [p. 58].\n- **Excessive model complexity**: A model with too many parameters relative to the data size can fit noise [p. 60].\n- **Lack of regularization**: Without techniques like dropout or weight decay, the model is unconstrained in how it fits the data [p. 61]."
-        }
+        Overfitting occurs when a model learns the training data too closely, capturing noise rather than the underlying pattern. This results in poor generalization to unseen data.
+
+        Common causes include:
+        - **Insufficient training data**: With too few examples, the model memorizes rather than generalizes [p. 58].
+        - **Excessive model complexity**: A model with too many parameters relative to the data size can fit noise [p. 60].
+        - **Lack of regularization**: Without techniques like dropout or weight decay, the model is unconstrained in how it fits the data [p. 61].
         """
 
     messages = [

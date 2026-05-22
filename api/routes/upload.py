@@ -11,6 +11,6 @@ def upload_document(file: Annotated[UploadFile, File(description="A file read as
     try:
         upload_object = RAGPipeline()
         session_id = upload_object.ingest_document(file=file)
-        return UploadResponse(message="Document uploaded and ingested successfully.", session_id="123456")
+        return UploadResponse(message="Document uploaded and ingested successfully.", session_id=session_id)
     except Exception as e:
         raise HTTPException(status_code=405, detail=f"Error occurred while uploading document: {str(e)}")

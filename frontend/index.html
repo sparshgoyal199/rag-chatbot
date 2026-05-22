@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Assistant</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 h-screen">
+
+  <!-- Main Container -->
+  <div class="flex h-screen">
+
+    <!-- Left Sidebar -->
+    <aside class="w-1/4 bg-white border-r p-6 flex flex-col gap-6">
+
+      <!-- Project Title -->
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">
+          RAG Assistant
+        </h1>
+
+        <p class="text-sm text-gray-500 mt-1">
+          Upload PDFs and ask questions
+        </p>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="bg-gray-50 p-4 rounded-xl border">
+
+        <h2 class="font-semibold mb-3">
+          Upload Document
+        </h2>
+
+        <form id="upload-form">
+            <input required
+                type="file"
+                class="w-full border rounded-lg p-2 text-sm"
+                id="file-input"
+                name="file"
+                accept=".pdf,.pkl"
+            />
+
+            <button
+              id="upload-btn"
+              class="w-full mt-4 bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
+            >
+              Ingest Document
+            </button>
+        </form>
+      </div>
+
+      <!-- Session Status -->
+      <div class="bg-green-50 border border-green-200 p-4 rounded-xl">
+
+        <h3 class="font-medium text-green-800">
+          Session Status
+        </h3>
+
+        <p class="text-sm text-green-700 mt-2" id="session_status">
+          No active session
+        </p>
+      </div>
+
+    </aside>
+
+    <!-- Right Main Panel -->
+    <main class="flex-1 flex flex-col">
+
+      <!-- Chat Header -->
+      <div class="bg-white border-b px-6 py-4">
+        <h2 class="text-xl font-semibold">
+          Ask Questions
+        </h2>
+      </div>
+
+      <!-- Response Area -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-4">
+
+        <!-- Sample Response Card -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border">
+
+          <p class="text-gray-800">
+            Your response will appear here...
+          </p>
+
+          <div class="mt-4 text-sm text-gray-500">
+            Page 5 • ML_Book.pdf
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Query Input -->
+      <div class="bg-white border-t p-4 flex gap-3">
+
+        <form id="query_form" class="flex flex-1">
+          <input
+            type="text"
+            placeholder="Ask a question..."
+            class="flex-1 border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-black"
+            name="query"
+          />
+
+          <button
+            class="bg-black text-white px-6 rounded-xl hover:bg-gray-800 transition"
+          >
+            Ask
+          </button>
+        </form>
+
+      </div>
+
+    </main>
+
+  </div>
+
+</body>
+
+<script src="./static/jss/index.js"></script>
+
+</html>
