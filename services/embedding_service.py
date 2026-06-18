@@ -1,5 +1,4 @@
 from core.embedding_models import bge_model
-import math 
 
 def generate_chunks_embeddings(chunks: list[dict]):
     chunks_embeddings = []

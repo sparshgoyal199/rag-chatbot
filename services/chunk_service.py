@@ -27,23 +27,19 @@ def generate_chunks_payload(chunks: list[dict]) -> list[dict]:
     total_words = 0
     for idx, chunk in enumerate(chunks):
         text = chunk.text.strip()
-        # Step 1: Filter small chunks
+        
         if len(text) <= min_chunk_length:
             continue
         
-        # Step 3: Extract heading
         heading = None
         if hasattr(chunk.meta, "headings") and chunk.meta.headings:
             heading = chunk.meta.headings[0]
-
-        total_words += len(heading.split())
-        # Step 4: Extract doc_items info (page_no + reference)
+            total_words += len(heading.split())
         page_no = None
 
         if chunk.meta.doc_items:
             first_item = chunk.meta.doc_items[0]
 
-            # page number
             if first_item.prov:
                 page_no = first_item.prov[0].page_no
 
@@ -51,7 +47,6 @@ def generate_chunks_payload(chunks: list[dict]) -> list[dict]:
         if chunk.meta.origin and chunk.meta.origin.filename:
             filename = chunk.meta.origin.filename
 
-        # Step 5: Build dictionary
         properties = {
             "heading": heading,
             "content": text,

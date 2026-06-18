@@ -20,12 +20,6 @@ app.include_router(session_router)
 app.include_router(query_router)
 app.include_router(upload_router)
 
-# # Mount the static directory for CSS, images, and other assets
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# @app.get("/")
-# def read_index():
-#     return FileResponse("static/index.html")
 
 if __name__ == "__main__":
     import uvicorn

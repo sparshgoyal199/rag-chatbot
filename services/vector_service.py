@@ -18,13 +18,11 @@ def create_collection(session_id: str):
             distance=models.Distance.DOT,
             hnsw_config=models.HnswConfigDiff(
                 m=32,
-                ef_construct=128,
+                ef_construct=64,
                 full_scan_threshold=100
             ),
             quantization_config=models.ScalarQuantization(
                 scalar=models.ScalarQuantizationConfig(type=models.ScalarType.INT8, always_ram=True, quantile=0.99)
-                # Remaining values will get be scaled better from this quantile thing except outlier, they will surely get distorted    
-                # jitna mai quantile ki value km kronga, usse unn quantile value ki asli scaled na hone par, unko galat dimension assign ho jaaeygi - that means effect is that we are some distorting the dimensions of the vector
             ),
             on_disk=True
             )
@@ -43,7 +41,7 @@ def store_vectors(session_id: str, chunks: list[dict], vectors: list[list[float]
         points=points
     )
     print("Vectors stored successfully in collection:", session_id)
-    # Code to store vectors in the collection would go here
+
 
 def build_points(chunks_payload: list[dict], vectors: list[list[float]], avg_doc_length: float) -> list[models.PointStruct]:
     points=[
@@ -85,4 +83,3 @@ def retrieve_results(session_id: str, prefetch: list[models.Prefetch]):
         limit=5,
     )
     return results
-

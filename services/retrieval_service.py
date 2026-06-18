@@ -1,5 +1,6 @@
 from qdrant_client import models
 from services.vector_service import retrieve_results
+from fastapi.responses import StreamingResponse
 from core.llm import groq_client
 import json
 
@@ -103,17 +104,21 @@ def format_retrieved_chunks(relevant_chunks_payload: list[dict]) -> str:
         formatted_chunks += f"filename: {chunk['filename']}\n\n"
     return formatted_chunks
 
-def retrieve__llm_response(prompt: list[dict]) -> str:
-    # This function will call the mistral api to get the response for the given prompt
-    response = groq_client.chat.completions.create(
-        messages=prompt,
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
-        )
-    return response.choices[0].message.content
+async def retrieve__llm_response(prompt: list[dict]) -> StreamingResponse:
+    async def event_gen():
+        stream = await groq_client.chat.completions.create(
+            messages=prompt,
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            stream=True
+            )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield f"{delta}"
+        yield "done"
+    return StreamingResponse(event_gen())
 
 def retrieve_relevant_chunks(session_id: str, embedded_query: list[float], original_query: str):
-    # will use vector_service for actually querying the db, it will not have its own logic of querying the db
-    # It will only have logic of hybrid_search, and BM25 sparse vector
     result_payload = []
     prefetch = [
         models.Prefetch(
@@ -138,8 +143,8 @@ def retrieve_relevant_chunks(session_id: str, embedded_query: list[float], origi
         })
     return result_payload
 
-def response_generator(query: str, relevant_chunks_payload: list[dict]):
+async def response_generator(query: str, relevant_chunks_payload: list[dict]):
     formatted_chunks = format_retrieved_chunks(relevant_chunks_payload)
     prompt = prompt_formatter(query, formatted_chunks)
-    llm_response = retrieve__llm_response(prompt)
+    llm_response = await retrieve__llm_response(prompt)
     return llm_response

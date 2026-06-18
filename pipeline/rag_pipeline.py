@@ -18,10 +18,10 @@ class RAGPipeline:
         store_vectors(session_id, chunks_payload, embedded_chunks, avg_doc_length)
         return session_id
     
-    def query_document(self, session_id: str, query: str):
+    async def query_document(self, session_id: str, query: str):
         embedded_query = generate_query_embeddings(query)
         relevant_chunks_payload = retrieve_relevant_chunks(session_id, embedded_query, query)
-        response = response_generator(query, relevant_chunks_payload)
+        response = await response_generator(query, relevant_chunks_payload)
         return response
 
     def delete_session(self, session_id: str):
