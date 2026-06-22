@@ -1,15 +1,18 @@
 from fastapi import UploadFile, HTTPException
-from io import BytesIO
-from docling_core.types.io import DocumentStream
-from core.docling import doc_converter
+# from io import BytesIO
+# from docling_core.types.io import DocumentStream
+# from core.docling import doc_converter
 import logging
-from docling_core.types.doc import DoclingDocument
+# from docling_core.types.doc import DoclingDocument
 from collections import Counter
 from docling_core.types.doc import DocItemLabel, SectionHeaderItem
 from docling.datamodel.document import ConversionResult
 import pickle
+from docling_core.types.doc import DoclingDocument
+import modal
 
-
+#EmbeddingModel = modal.Cls.from_name("embeddings-generator", "EmbeddingModel")
+parsing_and_embedding_model = modal.Cls.from_name("parsing_and_embedding_generator", "ParsingEmbeddingModel")
 log = logging.getLogger(__name__)
 def validate_document(doc: ConversionResult):
     """
@@ -123,8 +126,8 @@ def parse_document(file: UploadFile):
         return valid_structured_doc
     if file_extension not in ["pdf"]:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
-    file_stream = BytesIO(file_bytes)
-    docling_input_obj = DocumentStream(name=filename, stream=file_stream)
-    structured_doc = doc_converter.convert(docling_input_obj)
-    valid_structured_doc = validate_document(structured_doc.document)
+    modal_obj = parsing_and_embedding_model()
+    structured_doc = modal_obj.parsing_pdf.remote(filename,file_bytes)["docling_document"]
+    structured_doc = DoclingDocument.model_validate(structured_doc)
+    valid_structured_doc = validate_document(structured_doc)
     return valid_structured_doc

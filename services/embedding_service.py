@@ -1,15 +1,11 @@
-from core.embedding_models import bge_model
+import modal
+#EmbeddingModel = modal.Cls.from_name("embeddings-generator", "EmbeddingModel")
+parsing_and_embedding_model = modal.Cls.from_name("parsing_and_embedding_generator", "ParsingEmbeddingModel")
 
-def generate_chunks_embeddings(chunks: list[dict]):
-    chunks_embeddings = []
-    for chunk in chunks:
-        content = chunk.get("content", "")
-        embedding = bge_model.encode(content)
-        embedding.tolist()
-        chunks_embeddings.append(embedding)
-    return chunks_embeddings
-
-def generate_query_embeddings(query:str):
-    query_embeddings = bge_model.encode(query)
-    query_embeddings.tolist()
-    return query_embeddings
+def generate_embeddings(query: str = None, chunks: list[dict] = None):
+    #embedObj = EmbeddingModel()
+    modal_obj = parsing_and_embedding_model()
+    if query:
+        return modal_obj.embed_query.remote(query)
+    else:
+        return modal_obj.embed_chunks.remote(chunks)

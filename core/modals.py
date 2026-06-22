@@ -1,18 +1,8 @@
-from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
-from transformers import AutoTokenizer
 import modal
 import os
 
-#MAX_TOKENS = 500
-MAX_TOKENS = 400
-
-tokenizer = HuggingFaceTokenizer(
-    tokenizer=AutoTokenizer.from_pretrained("Qwen/Qwen3-Embedding-8B"),
-    #tokenizer=AutoTokenizer.from_pretrained("")
-    max_tokens=MAX_TOKENS,
-)
-
-MODEL_ID = "BAAI/bge-small-en-v1.5"
+#MODEL_ID = "BAAI/bge-small-en-v1.5"
+MODEL_ID = "Qwen/Qwen3-Embedding-8B"
 
 image = modal.Image.debian_slim().pip_install(
     "torch==2.6.0",
@@ -24,7 +14,7 @@ image = modal.Image.debian_slim().pip_install(
     "docling-parse==5.4.0"
 )
 
-app = modal.App("embeddings-generator", image=image)
+app = modal.App("parsing_and_embedding_generator", image=image)
 
 GPU_CONFIG = "A10G"
 CACHE_DIR = "/cache"
@@ -34,21 +24,33 @@ cache_vol = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 @app.cls(
     gpu=GPU_CONFIG,
     volumes={CACHE_DIR: cache_vol},
-    scaledown_window=60 * 30,
+    scaledown_window=60 * 5,
     timeout=60 * 30,
 )
 
 @modal.concurrent(max_inputs=15)
-class EmbeddingModel:
+class ParsingEmbeddingModel:
 
     @modal.enter()
     def setup(self):
+        import torch
         from sentence_transformers import SentenceTransformer
         self.model = SentenceTransformer(
             MODEL_ID,
             cache_folder=CACHE_DIR,
+            model_kwargs={"torch_dtype": torch.bfloat16},
+            device="cuda"
         )
+        allocated = torch.cuda.memory_allocated(0) / 1024**3
+        reserved  = torch.cuda.memory_reserved(0) / 1024**3
+        total     = torch.cuda.get_device_properties(0).total_memory / 1024**3
         
+        print(f"=== VRAM AFTER QWEN Embedding Model ===",'/n')
+        print(f"Allocated : {allocated:.2f} GB",'/n')
+        print(f"Reserved  : {reserved:.2f} GB",'/n')
+        print(f"Total     : {total:.2f} GB",'/n')
+        print(f"Free      : {total - reserved:.2f} GB",'/n')
+
         os.environ["HF_HOME"] = CACHE_DIR
         os.environ["DOCLING_CACHE_DIR"] = CACHE_DIR
         from docling.datamodel.base_models import InputFormat
@@ -85,6 +87,15 @@ class EmbeddingModel:
 
         doc_converter.initialize_pipeline(InputFormat.PDF)
         self.docling_obj = doc_converter
+
+        allocated = torch.cuda.memory_allocated(0) / 1024**3
+        reserved  = torch.cuda.memory_reserved(0) / 1024**3
+        total     = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        print(f"=== VRAM AFTER DOCLING ===",'/n')
+        print(f"Allocated : {allocated:.2f} GB",'/n')
+        print(f"Reserved  : {reserved:.2f} GB",'/n')
+        print(f"Total     : {total:.2f} GB",'/n')
+        print(f"Free      : {total - reserved:.2f} GB",'/n')
 
     def _encode_query(self, query: str) -> list[float]:
         return self.model.encode(query, normalize_embeddings=True).tolist()

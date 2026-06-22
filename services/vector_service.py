@@ -1,4 +1,4 @@
-from qdrant_client import QdrantClient, models
+from qdrant_client import models
 from core.qdrant import client
 import uuid
 from fastapi import HTTPException
@@ -14,7 +14,7 @@ def create_collection(session_id: str):
     client.create_collection(
         collection_name=session_id,
         vectors_config={
-            "content_dense_vector": models.VectorParams(size=384, 
+            "content_dense_vector": models.VectorParams(size=4096, 
             distance=models.Distance.DOT,
             hnsw_config=models.HnswConfigDiff(
                 m=32,

@@ -1,6 +1,5 @@
 let upload_url = "http://localhost:8000/upload"
 let delete_url = "http://localhost:8000/session"
-
 let upload_options = {
    method: 'POST'
 }
@@ -11,7 +10,6 @@ let delete_options = {
 
 let query_form = document.getElementById("query_form")
 let upload_form = document.getElementById("upload-form");
-const decoder = new TextDecoder("utf-8")
 
 function session_status_update(){
    let session_status = document.getElementById("session_status")
@@ -192,6 +190,7 @@ function remove_loader(){
    }
 }
 
+
 async function augmented_answer(query_obj){
    const response = await fetch("http://localhost:8000/query",{
       method: "POST",
@@ -210,18 +209,23 @@ async function augmented_answer(query_obj){
    })
 
    remove_loader()
-
+   const decoder = new TextDecoder("utf-8")
    const response_element = create_streaming_response()
    const reader = response.body.getReader()
    while(true){
       const chunk = await reader.read()
       const {done,value} = chunk
       if(done) break
-      const decodedChunk = decoder.decode(value,{stream:true})
-      if(decodedChunk == "done") break
-      append_stream_chunk(response_element,decodedChunk)
-}
-}
+      let decodedChunk = decoder.decode(value,{stream:true})
+      let decodedChunks = decodedChunk.split("\n\n")
+      let length = decodedChunks.length
+      for (let index = 0; index < length-1; index++) {
+         let parsedDecodedChunk = decodedChunks[index].slice(5,).trim()
+         let jsonDecodedChunk = JSON.parse(parsedDecodedChunk)
+         append_stream_chunk(response_element,jsonDecodedChunk['delta'])
+      }
+    }
+   }
 
 async function query_document(event){
    event.preventDefault()
@@ -248,15 +252,15 @@ async function query_document(event){
 upload_form.addEventListener("submit",upload_document)
 query_form.addEventListener("submit",query_document)
 
-// window.addEventListener("beforeunload", (event) => {
-//     event.preventDefault();
-//     event.returnValue = '';
-// });
+window.addEventListener("beforeunload", (event) => {
+    event.preventDefault();
+    event.returnValue = '';
+});
 
-// window.addEventListener("pagehide", (event) => {
-//     if (!event.persisted) {
-//          let session_id = sessionStorage.getItem("session_id")
-//         sessionStorage.removeItem("session_id");
-//         navigator.sendBeacon(`http://127.0.0.1:8000/session/${session_id}`)
-//     }
-// });
+window.addEventListener("pagehide", (event) => {
+    if (!event.persisted) {
+         let session_id = sessionStorage.getItem("session_id")
+        sessionStorage.removeItem("session_id");
+        navigator.sendBeacon(`http://127.0.0.1:8000/session/${session_id}`)
+    }
+});

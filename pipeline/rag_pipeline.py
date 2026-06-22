@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from services.embedding_service import generate_chunks_embeddings, generate_query_embeddings
+from services.embedding_service import generate_embeddings
 from utils.helpers import generate_session
 from services.document_service import parse_document
 from services.chunk_service import create_chunks
@@ -14,12 +14,12 @@ class RAGPipeline:
         session_id = generate_session()
         structured_doc = parse_document(file)
         chunks_payload, avg_doc_length = create_chunks(structured_doc)
-        embedded_chunks = generate_chunks_embeddings(chunks_payload)
+        embedded_chunks = generate_embeddings(query = None,chunks = chunks_payload)
         store_vectors(session_id, chunks_payload, embedded_chunks, avg_doc_length)
         return session_id
     
     async def query_document(self, session_id: str, query: str):
-        embedded_query = generate_query_embeddings(query)
+        embedded_query = generate_embeddings(query=query,chunks=None)
         relevant_chunks_payload = retrieve_relevant_chunks(session_id, embedded_query, query)
         response = await response_generator(query, relevant_chunks_payload)
         return response

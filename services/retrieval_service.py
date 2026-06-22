@@ -106,6 +106,7 @@ def format_retrieved_chunks(relevant_chunks_payload: list[dict]) -> str:
 
 async def retrieve__llm_response(prompt: list[dict]) -> StreamingResponse:
     async def event_gen():
+        resp = ''
         stream = await groq_client.chat.completions.create(
             messages=prompt,
             model="meta-llama/llama-4-scout-17b-16e-instruct",
@@ -114,9 +115,10 @@ async def retrieve__llm_response(prompt: list[dict]) -> StreamingResponse:
         async for chunk in stream:
             delta = chunk.choices[0].delta.content
             if delta:
-                yield f"{delta}"
-        yield "done"
-    return StreamingResponse(event_gen())
+                resp += delta
+                yield f"data: {json.dumps({'delta': delta})}\n\n"
+        yield f"data: {json.dumps({'delta': 'done'})}\n\n"
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
 
 def retrieve_relevant_chunks(session_id: str, embedded_query: list[float], original_query: str):
     result_payload = []
