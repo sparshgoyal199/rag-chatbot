@@ -4,7 +4,7 @@ import os
 #MODEL_ID = "BAAI/bge-small-en-v1.5"
 MODEL_ID = "Qwen/Qwen3-Embedding-8B"
 
-image = modal.Image.debian_slim().pip_install(
+image = modal.Image.debian_slim(python_version="3.11").pip_install(
     "torch==2.6.0",
     "sentence-transformers==3.4.1",
     "fastapi[standard]",

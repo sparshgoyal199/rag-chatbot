@@ -109,7 +109,7 @@ async def retrieve__llm_response(prompt: list[dict]) -> StreamingResponse:
         resp = ''
         stream = await groq_client.chat.completions.create(
             messages=prompt,
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            model="llama-3.3-70b-versatile",
             stream=True
             )
         async for chunk in stream:

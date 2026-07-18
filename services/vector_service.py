@@ -36,14 +36,15 @@ def store_vectors(session_id: str, chunks: list[dict], vectors: list[list[float]
     if not exist_collection(session_id):
         create_collection(session_id)
     points = build_points(chunks, vectors, avg_doc_length)
-    client.upsert(
-        collection_name=session_id,
-        points=points
-    )
+    client.upload_points(collection_name=session_id,
+                         batch_size=64,
+                         parallel=4,
+                    points=points)
     print("Vectors stored successfully in collection:", session_id)
 
 
 def build_points(chunks_payload: list[dict], vectors: list[list[float]], avg_doc_length: float) -> list[models.PointStruct]:
+    print("I am inside the building points!!")
     points=[
         models.PointStruct(
             id=uuid.uuid4().hex,

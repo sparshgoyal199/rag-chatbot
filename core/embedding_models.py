@@ -4,11 +4,10 @@ import modal
 import os
 
 #MAX_TOKENS = 500
-MAX_TOKENS = 400
+MAX_TOKENS = 800
 
 tokenizer = HuggingFaceTokenizer(
     tokenizer=AutoTokenizer.from_pretrained("Qwen/Qwen3-Embedding-8B"),
-    #tokenizer=AutoTokenizer.from_pretrained("")
     max_tokens=MAX_TOKENS,
 )
 

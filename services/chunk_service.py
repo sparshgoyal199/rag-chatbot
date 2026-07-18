@@ -1,4 +1,3 @@
-from cv2 import threshold
 from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
 from transformers import AutoTokenizer
 from docling.chunking import HybridChunker, HierarchicalChunker
