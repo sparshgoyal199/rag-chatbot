@@ -14,7 +14,7 @@ def create_collection(session_id: str):
     client.create_collection(
         collection_name=session_id,
         vectors_config={
-            "content_dense_vector": models.VectorParams(size=4096, 
+            "content_dense_vector": models.VectorParams(size=768, 
             distance=models.Distance.DOT,
             hnsw_config=models.HnswConfigDiff(
                 m=32,

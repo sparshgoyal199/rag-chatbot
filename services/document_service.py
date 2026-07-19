@@ -117,7 +117,7 @@ def remove_false_headers_from_doc(doc, repeating_headers: set, threshold: float 
     log.info(f"Successfully removed {len(false_headers)} false header(s) from document.")
     return doc
 
-def parse_document(file: UploadFile):
+async def parse_document(file: UploadFile):
     filename = file.filename
     file_bytes = file.file.read()
     file_extension = file.content_type.split("/")[-1].lower()
@@ -127,7 +127,8 @@ def parse_document(file: UploadFile):
     if file_extension not in ["pdf"]:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_extension}")
     modal_obj = parsing_and_embedding_model()
-    structured_doc = modal_obj.parsing_pdf.remote(filename,file_bytes)["docling_document"]
-    structured_doc = DoclingDocument.model_validate(structured_doc)
+    doc_obj = await modal_obj.parsing_pdf.remote.aio(filename,file_bytes)
+    docling_doc = doc_obj["docling_document"]
+    structured_doc = DoclingDocument.model_validate(docling_doc)
     valid_structured_doc = validate_document(structured_doc)
     return valid_structured_doc

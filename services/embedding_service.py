@@ -2,10 +2,18 @@ import modal
 #EmbeddingModel = modal.Cls.from_name("embeddings-generator", "EmbeddingModel")
 parsing_and_embedding_model = modal.Cls.from_name("parsing_and_embedding_generator", "ParsingEmbeddingModel")
 
-def generate_embeddings(query: str = None, chunks: list[dict] = None):
+async def generate_embeddings(query: str = None, chunks: list[dict] = None):
     #embedObj = EmbeddingModel()
     modal_obj = parsing_and_embedding_model()
     if query:
-        return modal_obj.embed_query.remote(query)
+        return await modal_obj.embed_query.remote.aio(query)
     else:
-        return modal_obj.embed_chunks.remote(chunks)
+        return await modal_obj.embed_chunks.remote.aio(chunks)
+    
+# def generate_embeddings(query: str = None, chunks: list[dict] = None):
+#     #embedObj = EmbeddingModel()
+#     modal_obj = parsing_and_embedding_model()
+#     if query:
+#         return modal_obj.embed_query.remote(query)
+#     else:
+#         return modal_obj.embed_chunks.remote(chunks)

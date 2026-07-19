@@ -2,16 +2,16 @@ import modal
 import os
 
 #MODEL_ID = "BAAI/bge-small-en-v1.5"
-MODEL_ID = "Qwen/Qwen3-Embedding-8B"
-
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "torch==2.6.0",
-    "sentence-transformers==3.4.1",
+#MODEL_ID = "Qwen/Qwen3-Embedding-8B"
+MODEL_ID = " BAAI/bge-base-en-v1.5"
+image = modal.Image.debian_slim(python_version="3.14").pip_install(
+    "torch",
+    "sentence-transformers",
     "fastapi[standard]",
-    "docling==2.75.0",
-    "docling-core==2.66.0",
-    "docling-ibm-models==3.11.0",
-    "docling-parse==5.4.0"
+    "docling",
+    "docling-core",
+    "docling-ibm-models",
+    "docling-parse"
 )
 
 app = modal.App("parsing_and_embedding_generator", image=image)
@@ -38,7 +38,7 @@ class ParsingEmbeddingModel:
         self.model = SentenceTransformer(
             MODEL_ID,
             cache_folder=CACHE_DIR,
-            model_kwargs={"torch_dtype": torch.bfloat16},
+            #model_kwargs={"torch_dtype": torch.bfloat16},
             device="cuda"
         )
         allocated = torch.cuda.memory_allocated(0) / 1024**3
