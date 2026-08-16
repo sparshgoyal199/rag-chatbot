@@ -131,4 +131,4 @@ async def parse_document(file: UploadFile):
     docling_doc = doc_obj["docling_document"]
     structured_doc = DoclingDocument.model_validate(docling_doc)
     valid_structured_doc = validate_document(structured_doc)
-    return valid_structured_doc
+    return (valid_structured_doc, file_bytes)

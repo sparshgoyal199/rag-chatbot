@@ -2,17 +2,17 @@ from qdrant_client import models
 from core.qdrant import client
 import uuid
 from fastapi import HTTPException
-def exist_collection(session_id: str) -> bool:
+async def exist_collection(pdf_id: str) -> bool:
     try:
-        client.get_collection(session_id)
+        await client.get_collection(pdf_id)
         return True
     except Exception as e:
-        print(f"Collection {session_id} does not exist: {e}")
+        print(f"Qdrant error: {type(e).__name__}: {e}")
         return False
 
-def create_collection(session_id: str):
-    client.create_collection(
-        collection_name=session_id,
+async def create_collection(pdf_id: str):
+    await client.create_collection(
+        collection_name=pdf_id,
         vectors_config={
             "content_dense_vector": models.VectorParams(size=768, 
             distance=models.Distance.DOT,
@@ -32,19 +32,17 @@ def create_collection(session_id: str):
         },
     )
 
-def store_vectors(session_id: str, chunks: list[dict], vectors: list[list[float]], avg_doc_length: float):
-    if not exist_collection(session_id):
-        create_collection(session_id)
+async def store_vectors(pdf_id: str, chunks: list[dict], vectors: list[list[float]], avg_doc_length: float):
+    if not await exist_collection(pdf_id):
+        await create_collection(pdf_id)
     points = build_points(chunks, vectors, avg_doc_length)
-    client.upload_points(collection_name=session_id,
+    client.upload_points(collection_name=pdf_id,
                          batch_size=64,
                          parallel=4,
                     points=points)
-    print("Vectors stored successfully in collection:", session_id)
 
 
 def build_points(chunks_payload: list[dict], vectors: list[list[float]], avg_doc_length: float) -> list[models.PointStruct]:
-    print("I am inside the building points!!")
     points=[
         models.PointStruct(
             id=uuid.uuid4().hex,
@@ -62,19 +60,19 @@ def build_points(chunks_payload: list[dict], vectors: list[list[float]], avg_doc
         ]
     return points
 
-def delete_collection(session_id: str):
-    if exist_collection(session_id):
-        client.delete_collection(session_id)
-        print(f"Collection {session_id} deleted successfully.")
+async def delete_collection(pdf_id: str):
+    if await exist_collection(pdf_id):
+        await client.delete_collection(pdf_id)
+        print(f"Collection {pdf_id} deleted successfully.")
     else:
-        print(f"Collection {session_id} does not exist. No deletion performed.")
+        print(f"Collection {pdf_id} does not exist. No deletion performed.")
 
-def retrieve_results(session_id: str, prefetch: list[models.Prefetch]):
-    if not exist_collection(session_id):
-        raise HTTPException(status_code=403, detail=f"Session {session_id} not found.Please reupload the document and try again.")
+async def retrieve_results(pdf_id: str, prefetch: list[models.Prefetch]):
+    if not await exist_collection(pdf_id):
+        raise HTTPException(status_code=403, detail=f"Session {pdf_id} not found.Please reupload the document and try again.")
     
-    results = client.query_points(
-        collection_name=session_id,
+    results = await client.query_points(
+        collection_name=pdf_id,
         prefetch=prefetch,
         query=models.RrfQuery(rrf=models.Rrf(weights=[1.5, 1.0])),
         search_params=models.SearchParams(

@@ -1,23 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pipeline.rag_pipeline import RAGPipeline
 from fastapi import UploadFile,File
 from typing import Annotated
 from models.response_models import UploadResponse
+from dependencies import get_current_user
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+import traceback
+from pipeline.ingest_workflow import ingestion_workflow
 
 upload_router = APIRouter() 
 
 @upload_router.post("/upload")
-def upload_document(file: Annotated[UploadFile, File(description="A file read as UploadFile")]):
+async def upload_document(file: Annotated[UploadFile, File(description="A file read as UploadFile")], current_user: dict = Depends(get_current_user)):
     try:
-        upload_object = RAGPipeline()
-        return StreamingResponse(
-            upload_object.ingest_document(file),
-            media_type="text/event-stream"
-        )
-        # session_id = upload_object.ingest_document(file=file)
-        # yield session_id
-        #return UploadResponse(message="Document uploaded and ingested successfully.", session_id=session_id)
+        user_id = current_user["id"]
+        if not file.filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+        initial_state = {"file": file, "user_id": user_id}
+        final_state = await ingestion_workflow.ainvoke(initial_state)
+        return "Document Uploaded Successfully"
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=405, detail=f"Error occurred while uploading document: {str(e)}")

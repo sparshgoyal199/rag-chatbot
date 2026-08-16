@@ -60,7 +60,7 @@ class ParsingEmbeddingModel:
         from docling.document_converter import DocumentConverter, PdfFormatOption
         from docling.datamodel.layout_model_specs import DOCLING_LAYOUT_HERON
         from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
-
+         
         pipeline_options = PdfPipelineOptions()
         pipeline_options.accelerator_options = AcceleratorOptions(
             num_threads=4,   # safe default, CPU threads for pre/post processing

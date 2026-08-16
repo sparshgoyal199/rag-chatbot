@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 from services.embedding_service import generate_embeddings
-from utils.helpers import generate_session
+from utils.helpers import generate_pdf_id
 from services.document_service import parse_document
 from services.chunk_service import create_chunks
 from services.vector_service import store_vectors
@@ -13,7 +13,7 @@ class RAGPipeline:
     
     async def ingest_document(self, file: UploadFile):
         try:
-            session_id = generate_session()
+            session_id = generate_pdf_id()
 
             yield f"data: {json.dumps({
                 'type': 'updates',
@@ -77,9 +77,9 @@ class RAGPipeline:
     
     async def query_document(self, session_id: str, query: str):
         embedded_query = await generate_embeddings(query=query,chunks=None)
-        relevant_chunks_payload = retrieve_relevant_chunks(session_id, embedded_query, query)
+        relevant_chunks_payload = await retrieve_relevant_chunks(session_id, embedded_query, query)
         response = await response_generator(query, relevant_chunks_payload)
         return response
 
-    def delete_session(self, session_id: str):
-        delete_collection(session_id)
+    async def delete_session(self, session_id: str):
+        await delete_collection(session_id)

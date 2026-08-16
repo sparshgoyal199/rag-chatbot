@@ -6,9 +6,11 @@ from docling_core.transforms.chunker.hierarchical_chunker import (
     ChunkingSerializerProvider,
     TripletTableSerializer
 )
+from sklearn.cluster import KMeans
 from docling_core.transforms.serializer.markdown import MarkdownParams
 from core.embedding_models import tokenizer
 from docling.datamodel.document import ConversionResult
+import numpy as np
 from fastapi import HTTPException
 
 class MDTableSerializerProvider(ChunkingSerializerProvider):
@@ -54,7 +56,7 @@ def generate_chunks_payload(chunks: list[dict]) -> list[dict]:
         }
         chunks_payload.append(properties)
     if len(chunks_payload) == 0:
-        raise HTTPException(status_code=401, detail="No valid chunks found after processing. So pdf can not be processed further.")
+        raise HTTPException(status_code=400, detail="No valid chunks found after processing. So pdf can not be processed further.")
     avg_doc_length = total_words / len(chunks_payload)
     return (chunks_payload, avg_doc_length)
 
@@ -68,3 +70,15 @@ def create_chunks(structured_doc: ConversionResult) -> list[dict]:
     chunks = list(chunk_iter)
     chunks_payload = generate_chunks_payload(chunks)
     return chunks_payload
+
+def k_means_summarised_chunks(total_vectors: int, embedded_chunks: list[list], chunks_payload: list[dict]):
+    n_summary_chunks = min(total_vectors,10)
+    kmeans = KMeans(n_clusters=n_summary_chunks, random_state=42).fit(embedded_chunks)
+    summary_chunks = []
+    for cluster_id in range(n_summary_chunks):
+        cluster_center = kmeans.cluster_centers_[cluster_id]
+        cluster_points_idx = np.where(kmeans.labels_ == cluster_id)[0]
+        dists = np.linalg.norm(embedded_chunks[cluster_points_idx] - cluster_center, axis=1)
+        closest_idx = cluster_points_idx[np.argmin(dists)]
+        summary_chunks.append(chunks_payload[closest_idx])
+    return summary_chunks
