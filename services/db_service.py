@@ -21,13 +21,6 @@ async def uploading_file(pdf_id, user_id, filename, file_bytes, summary):
             file_options={"content-type": "application/pdf"},
         )
 
-        # # Get the public URL
-        # public_url = (
-        #     await core_db.supabase_client.storage
-        #     .from_(bucket_name)
-        #     .get_public_url(remote_path)
-        # )
-
         # Insert the metadata into the database
         db_response = (
             await core_db.supabase_client.table("pdfs")

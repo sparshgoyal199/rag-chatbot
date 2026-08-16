@@ -1,9 +1,5 @@
 from pydantic import BaseModel
 from datetime import datetime
- 
-class UploadResponse(BaseModel):
-    message: str
-    session_id: str
 
 class QueryResponse(BaseModel):
     answer: str

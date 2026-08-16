@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Optional
 
 class MessageOut(BaseModel):
     id: UUID
@@ -12,6 +12,7 @@ class MessageOut(BaseModel):
 
 class ChatHistoryResponse(BaseModel):
     session_id: UUID
+    guest_name: Optional[str] = None
     messages: list[MessageOut]
 
 class GuestIdentify(BaseModel):

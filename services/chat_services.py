@@ -19,7 +19,6 @@ async def get_or_create_session(pdf_id: str, user_id: str | None, guest_name: st
     }).execute()
     return result.data[0]
 
-import core.db as core_db
 
 async def save_message(session_id: str, role: str, content: str) -> dict:
     result = await core_db.supabase_client.table("chat_messages").insert({

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Request,Query
-from dependencies import get_current_user
 from services.pdf_service import generate_share_link
 from models.pdf import ShareResponse
 from dependencies import get_current_user
@@ -26,16 +25,17 @@ async def list_my_pdfs(current_user: dict = Depends(get_current_user)):
 async def view_shared_pdf(share_token: str):
     return await get_pdf_detail_for_guest(share_token)
 
-@pdf_router.get("/{pdf_id}", response_model=PdfDetail)
-async def view_my_pdf(pdf_id: str, current_user: dict = Depends(get_current_user)):
-    return await get_pdf_detail_for_owner(pdf_id, current_user["id"])
-
 @pdf_router.get("/search", response_model=list[PdfListItem])
 async def search_pdfs(
     q: str = Query(..., min_length=1),
     current_user: dict = Depends(get_current_user),
 ):
     return await get_searched_pdf(q, current_user["id"])
+
+@pdf_router.get("/{pdf_id}", response_model=PdfDetail)
+async def view_my_pdf(pdf_id: str, current_user: dict = Depends(get_current_user)):
+    return await get_pdf_detail_for_owner(pdf_id, current_user["id"])
+
 
 
 

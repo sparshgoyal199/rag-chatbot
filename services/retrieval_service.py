@@ -26,21 +26,6 @@ def format_retrieved_chunks(relevant_chunks_payload: list[dict]) -> str:
         formatted_chunks += f"filename: {chunk['filename']}\n\n"
     return formatted_chunks
 
-# def retrieve__llm_response(messages: list) -> StreamingResponse:
-#     async def event_gen():
-#         resp = ''
-#         stream = await groq_client.chat.completions.create(
-#             messages=prompt,
-#             model="llama-3.3-70b-versatile",
-#             stream=True
-#             )
-#         async for chunk in stream:
-#             delta = chunk.choices[0].delta.content
-#             if delta:
-#                 resp += delta
-#                 yield f"data: {json.dumps({'delta': delta})}\n\n"
-#         yield f"data: {json.dumps({'delta': 'done'})}\n\n"
-#     return StreamingResponse(event_gen(), media_type="text/event-stream")
 
 async def retrieve__llm_response(messages: list) -> StreamingResponse:
     response = await llm.ainvoke(messages)

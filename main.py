@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from api.routes.session import session_router
 from api.routes.query import query_router
-from api.routes.auth import router
+from api.routes.auth import auth_router
 from api.routes.upload import upload_router
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,10 +34,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(session_router)
 app.include_router(query_router)
 app.include_router(upload_router)
-app.include_router(router)
+app.include_router(auth_router)
 app.include_router(pdf_router)
 app.include_router(comment_router)
 app.include_router(chat_router)

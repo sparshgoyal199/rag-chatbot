@@ -37,7 +37,7 @@ async def generate_share_link(pdf_id: str, user_id: str, base_url: str) -> dict:
 async def get_pdfs_for_user(user_id: str) -> list[dict]:
     result = (
         await core_db.supabase_client.table("pdfs")
-        .select("id, filename, upload_date, summary, status")
+        .select("id, filename, upload_date, summary")
         .eq("user_id", user_id)
         .order("upload_date", desc=True)
         .execute()

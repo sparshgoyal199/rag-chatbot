@@ -39,8 +39,11 @@ async def query_document(query: QueryRequest, pdf_id: str, current_user: dict = 
             await save_message(session["id"], "assistant", full_response)
             yield 'data: {"delta":"done"}\n\n'
         return StreamingResponse(ai_only_stream(),media_type="text/event-stream")
+    except HTTPException:
+        raise
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 @query_router.post("/shared/{share_token}/query")
 async def guest_query_document(query: QueryRequest, share_token: str):
@@ -69,5 +72,8 @@ async def guest_query_document(query: QueryRequest, share_token: str):
             await save_message(session["id"], "assistant", full_response)
             yield 'data: {"delta":"done"}\n\n'
         return StreamingResponse(ai_only_stream(),media_type="text/event-stream")
+    except HTTPException:
+            raise
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")

@@ -2,7 +2,7 @@ from langgraph.graph import StateGraph, START, END
 from fastapi import UploadFile,File
 from typing import Annotated
 from docling_core.types.doc import DoclingDocument
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile
 from services.embedding_service import generate_embeddings
 from utils.helpers import generate_pdf_id
 from services.document_service import parse_document
@@ -10,12 +10,10 @@ from datetime import datetime, timezone
 from services.chunk_service import create_chunks, k_means_summarised_chunks
 import uuid
 from langchain_core.messages import SystemMessage, HumanMessage
-from services.retrieval_service import response_generator, retrieve_relevant_chunks, creating_user_prompt
+from services.retrieval_service import response_generator, creating_user_prompt
 from pipeline.prompt import summary_system_prompt
 from services.db_service import uploading_file
-import time
 import numpy as np
-import os
 from services.vector_service import store_vectors
 from typing import TypedDict
 
@@ -36,7 +34,7 @@ class IngestionState(TypedDict):
 ingest_graph = StateGraph(IngestionState)
 
 def pdf_id_generation(state: IngestionState):
-    pdf_id = generate_pdf_id()
+    pdf_id = uuid.uuid4().hex
     return {"pdf_id": pdf_id}
 
 async def document_parsing(state: IngestionState):

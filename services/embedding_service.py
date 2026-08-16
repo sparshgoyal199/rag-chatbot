@@ -10,10 +10,3 @@ async def generate_embeddings(query: str = None, chunks: list[dict] = None):
     else:
         return await modal_obj.embed_chunks.remote.aio(chunks)
     
-# def generate_embeddings(query: str = None, chunks: list[dict] = None):
-#     #embedObj = EmbeddingModel()
-#     modal_obj = parsing_and_embedding_model()
-#     if query:
-#         return modal_obj.embed_query.remote(query)
-#     else:
-#         return modal_obj.embed_chunks.remote(chunks)
